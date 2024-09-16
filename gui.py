@@ -79,7 +79,8 @@ def run_ssh_command(ssh_info, text_widget):
             text_widget.insert(tk.END, f"error:\n{error}\n")
 
     except Exception as e:
-        text_widget.insert(tk.END, f"connection failed: {e}\n")
+        print(f"[ERROR]: {e}\n")
+        text_widget.insert(tk.END, f"error: {e}\n")
     finally:
         ssh.close()
 
@@ -98,8 +99,9 @@ def clear_text_widgets(text_widgets):
 
 
 # Function to stop Docker containers
-def stop_docker(ssh_info, container_names):
-    print("[INFO]: start stopping ")
+def stop_current_containers(ssh_info, container_names, text_widget):
+    for container in container_names:
+        print(f"[INFO]: start stopping container:{container}")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -110,53 +112,39 @@ def stop_docker(ssh_info, container_names):
             else:
                 command = f"docker stop {container}"
             ssh.exec_command(command)
-    except Exception as e:
-        print(e)
-    finally:
         for container in container_names:
             print(f"[INFO]: successfully stopped {container}")
+    except Exception as e:
+        print(f"[ERROR]: stop container failed: {e} ")
+        text_widget.insert(tk.END, f"[ERROR]: stop container failed: {e}\n ")
+    finally:
         ssh.close()
 
 
 # Function to stop Docker containers
 
-def quitt():
-    selected_option = dropbox.get()
+def stop_running_containers(selected_option):
     ssh_info = options[selected_option]
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         ssh.connect(ssh_info["hostname"], username=ssh_info["username"], password=ssh_info["password"], timeout=10)
-        if dropbox.get() == "test":
+        if selected_option == "test":
             command = f"source .zshrc && docker ps -q | xargs --no-run-if-empty docker stop"
         else:
             command = f"docker stop docker ps -q | xargs --no-run-if-empty docker stop"
         ssh.exec_command(command)
     except Exception as e:
-        print(e)
+        print(f"[ERROR]:stop running containers failed: {e} ")
     finally:
         ssh.close()
 
 
 def quit():
     selected_option = dropbox.get()
-    ssh_info = options[selected_option]
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    try:
-        ssh.connect(ssh_info["hostname"], username=ssh_info["username"], password=ssh_info["password"], timeout=10)
-        if dropbox.get() == "test":
-            command = f"source .zshrc && docker ps -q | xargs --no-run-if-empty docker stop"
-        else:
-            command = f"docker stop docker ps -q | xargs --no-run-if-empty docker stop"
-        ssh.exec_command(command)
-    except Exception as e:
-        print(e)
-    finally:
-        ssh.close()
-        root.quit()
-        print("[INFO]: Quit ")
+    root.destroy()
+    threading.Thread(target=stop_running_containers, args={selected_option}).start()
+    print("[INFO]: Quit ")
 
 
 # main
@@ -167,24 +155,25 @@ root.protocol("WM_DELETE_WINDOW", quit)
 setting_frame = tk.Frame(root)
 
 label = ttk.Label(setting_frame, text="Select Application：")
-label.grid(row=0, column=0, pady=10, sticky="e" )
+label.grid(row=0, column=0, pady=10, sticky="e")
 
 # drop box
-dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20,  bootstyle="info-reversed")
+dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20, bootstyle="info-reversed")
 dropbox.current(0)
 dropbox.grid(row=0, column=1, pady=10, sticky="we")
 
 # start button
 start_button = ttk.Button(setting_frame, text="Start", command=lambda: on_select(output_log_text), bootstyle=INFO)
-start_button.grid(row=0, column=2, padx=10,pady=10, sticky="we")
+start_button.grid(row=0, column=2, padx=10, pady=10, sticky="we")
 
 # Button to stop Docker containers
-stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER, command=lambda: stop_docker(options[dropbox.get()], containers[dropbox.get()]))
-stop_button.grid(row=0, column=3,  padx=10, pady=10, sticky="we")
+stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER,
+                         command=lambda: stop_current_containers(options[dropbox.get()], containers[dropbox.get()], output_log_text))
+stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
 
 # Button to clear output
 clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
-clear_button.grid(row=0, column=4,  padx=10, pady=10, sticky="we")
+clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
 
 setting_frame.pack()
 log_frame = tk.Frame(root)

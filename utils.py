@@ -19,12 +19,10 @@ containers = {
     "dnn":
         ["Work"],
 
-
-
 }
 
 
-HOSTNAME = "192.168.61.44"
+HOSTNAME = "192.168.68.86"
 USERNAME = "junchi"
 PASSWORD = "helloworld"
 
@@ -35,8 +33,8 @@ options = {
         "password": PASSWORD,
         "command": r"""
          docker start  Work
-         docker exec Work -c "source install/setup.bash && ros2 launch isaac_ros_argus_camera isaac_ros_argus_camera_stereo.launch.py" &
-         docker exec Work -c "source install/setup.bash && ros2 launch livox_ros_driver2 msg_MID360_launch.py"      
+         docker exec Work bash -c "source install/setup.bash && ros2 launch isaac_ros_argus_camera isaac_ros_argus_camera_stereo.launch.py" &
+         docker exec Work bash -c "source install/setup.bash && ros2 launch livox_ros_driver2 msg_MID360_launch.py"      
 """
     },
 
@@ -46,8 +44,8 @@ options = {
         "password": PASSWORD,
         "command": r"""
          docker start  Work
-         docker exec Work -c "source install/setup.bash && ros2 launch livox_ros_driver2 msg_custom_MID360_launch.py" &
-         docker exec Work -c "source install/setup.bash && ros2 launch fast_lio launch/mapping.launch.py" 
+         docker exec Work bash -c "source install/setup.bash && ros2 launch livox_ros_driver2 msg_custom_mid360.py" &
+         docker exec Work bash -c "source install/setup.bash && ros2 launch fast_lio mapping.launch.py rviz:=false" 
 """
     },
 
@@ -57,8 +55,8 @@ options = {
         "password": PASSWORD,
         "command": r"""
              docker start  Work
-             docker exec Work -c "source install/setup.bash && ros2 launch isaac_ros_examples isaac_ros_examples.launch.py launch_fragments:=argus_stereo,rectify_stereo,ess_disparity \
-engine_file_path:=${ISAAC_ROS_WS}/isaac_ros_assets/models/dnn_stereo_disparity/dnn_stereo_disparity_v4.0.0/ess.engine \ threshold:=0.35" 
+             docker exec Work bash -c "source install/setup.bash && ros2 launch isaac_ros_examples isaac_ros_examples.launch.py launch_fragments:=argus_stereo,rectify_stereo,ess_disparity \
+engine_file_path:=/workspaces/isaac_ros-dev/isaac_ros_assets/models/dnn_stereo_disparity/dnn_stereo_disparity_v4.0.0/ess.engine \ threshold:=0.35" 
     """
     },
 
@@ -68,7 +66,7 @@ engine_file_path:=${ISAAC_ROS_WS}/isaac_ros_assets/models/dnn_stereo_disparity/d
         "password": PASSWORD,
         "command": r"""
              docker start  Work
-             docker exec Work -c "source install/setup.bash && ros2 launch isaac_ros_examples isaac_ros_examples.launch.py launch_fragments:=argus_stereo,rectify_stereo,ess_disparity \
+             docker exec -it Work -c "source install/setup.bash && ros2 launch isaac_ros_examples isaac_ros_examples.launch.py launch_fragments:=argus_stereo,rectify_stereo,ess_disparity \
 engine_file_path:=${ISAAC_ROS_WS}/isaac_ros_assets/models/dnn_stereo_disparity/dnn_stereo_disparity_v4.0.0/ess.engine \ threshold:=0.35" 
     """
     },

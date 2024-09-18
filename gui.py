@@ -8,9 +8,6 @@ import paramiko
 import threading
 from utils import containers, options
 
-
-# docker start ros-dev-macos && docker exec ros-dev-macos bash -c "source ros_entrypoint.sh && ./setup.sh"
-
 def fetch_and_display_logs(ssh_info, text_widget, container_name):
     hostname = ssh_info["hostname"]
     username = ssh_info["username"]
@@ -100,6 +97,7 @@ def clear_text_widgets(text_widgets):
 
 # Function to stop Docker containers
 def stop_current_containers(ssh_info, container_names, text_widget):
+    start_button.configure(state="disabled")
     for container in container_names:
         print(f"[INFO]: start stopping container:{container}")
     ssh = paramiko.SSHClient()
@@ -107,10 +105,7 @@ def stop_current_containers(ssh_info, container_names, text_widget):
     try:
         ssh.connect(ssh_info["hostname"], username=ssh_info["username"], password=ssh_info["password"], timeout=10)
         for container in container_names:
-            if dropbox.get() == "test":
-                command = f"source .zshrc && docker stop $(docker ps)"
-            else:
-                command = f"docker stop {container}"
+            command = f"docker stop {container}"
             ssh.exec_command(command)
         for container in container_names:
             print(f"[INFO]: successfully stopped {container}")
@@ -119,6 +114,7 @@ def stop_current_containers(ssh_info, container_names, text_widget):
         text_widget.insert(tk.END, f"[ERROR]: stop container failed: {e}\n ")
     finally:
         ssh.close()
+        start_button.configure(state="enabled")
 
 
 # Function to stop Docker containers
@@ -129,10 +125,7 @@ def stop_running_containers(selected_option):
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         ssh.connect(ssh_info["hostname"], username=ssh_info["username"], password=ssh_info["password"], timeout=10)
-        if selected_option == "test":
-            command = f"source .zshrc && docker ps -q | xargs --no-run-if-empty docker stop"
-        else:
-            command = f"docker stop docker ps -q | xargs --no-run-if-empty docker stop"
+        command = f"docker stop docker ps -q | xargs --no-run-if-empty docker stop"
         ssh.exec_command(command)
     except Exception as e:
         print(f"[ERROR]:stop running containers failed: {e} ")

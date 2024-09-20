@@ -7,6 +7,10 @@ from tkinter import *
 import paramiko
 import threading
 from utils import containers, options
+import subprocess
+
+LOCAL_HOSTNAME = "192.168.68.72"
+REMOTE_HOSTNAME = "192.168.68.86"
 
 def fetch_and_display_logs(ssh_info, text_widget, container_name):
     hostname = ssh_info["hostname"]
@@ -138,7 +142,30 @@ def quit():
     root.destroy()
     threading.Thread(target=stop_running_containers, args={selected_option}).start()
     print("[INFO]: Quit ")
+  
 
+def open_rviz():
+    selected_option = dropbox.get()
+    if selected_option == "fast_livo" or selected_option == "fast_lio_ros1":
+                
+        # Command to run RViz in the Docker container
+        command = f"""
+        docker start ros1-visualizer &&
+        docker exec ros1-visualizer bash -c "
+        export ROS_IP={LOCAL_HOSTNAME}  
+        export ROS_HOSTNAME={LOCAL_HOSTNAME} 
+        export ROS_MASTER_URI=http://{REMOTE_HOSTNAME}:11311  
+        source ros_entrypoint.sh && rviz"
+        """
+        subprocess.Popen(command, shell=True)
+    else:
+        command = """
+            docker start ros2-visualizer
+            docker exec ros2-visualizer bash -c "source ros_entrypoint.sh && rviz2" &
+        """
+        subprocess.Popen(command, shell=True)
+
+        
 
 # main
 root = tk.Tk()
@@ -168,10 +195,19 @@ stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
 clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
 clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
 
+# Button to open rviz
+open_button_rviz2  = ttk.Button(setting_frame, text="Open RViz2", command=open_rviz,bootstyle=SUCCESS)
+open_button_rviz2.grid(row=0, column=5, padx=10, pady=10, sticky="we")
+
+
+
 setting_frame.pack()
 log_frame = tk.Frame(root)
+
+
+
 # output log
-output_log_text = scrolledtext.ScrolledText(log_frame, width=80, height=20)
+output_log_text = scrolledtext.ScrolledText(log_frame, width=150, height=50)
 output_log_text.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 log_frame.pack()
 

@@ -7,13 +7,13 @@ containers = {
         ["Work"],
 
     "fast-lio-ros1":
-        ["Work"],
+        ["dual-docker"],
 
     "fast-lio-ros2":
         ["Work"],
 
     "fast-livo":
-        ["Work", "dual-docker", "dual-docker3"],
+        ["Work", "dual-docker3"],
 
     "camera-detection":
         ["Work"],
@@ -26,6 +26,8 @@ containers = {
 
 }
 
+LOCAL_HOSTNAME = "192.168.68.72"
+REMOTE_HOSTNAME = "192.168.68.86"
 HOSTNAME = "192.168.68.86"
 USERNAME = "junchi"
 PASSWORD = "helloworld"
@@ -46,11 +48,11 @@ options = {
         "hostname": HOSTNAME,
         "username": USERNAME,
         "password": PASSWORD,
-        "command": r"""
-            docker start  Work
-            docker exec Work bash -c "source install/setup.bash && roslaunch livox_ros_driver2 msg_MID360.launch" &
-            docker exec Work bash -c "source noetic/ros1/catkin_ws/devel/setup.bash && roslaunch fast_lio mapping_mid360.launch rviz:=false"      
-"""
+        "command": f"""
+            docker start  dual-docker && docker exec dual-docker bash -c "export ROS_IP={REMOTE_HOSTNAME} &&export ROS_HOSTNAME={REMOTE_HOSTNAME} && export ROS_MASTER_URI=http://{REMOTE_HOSTNAME}:11311 && source noetic/ros1/catkin_ws/devel/setup.bash && roslaunch fast_lio mapping_mid360.launch rviz:=false"   &    
+            sleep 5
+            docker start  dual-docker && docker exec dual-docker bash -c "source noetic/ros1/devel/setup.bash && roslaunch livox_ros_driver2 msg_MID360.launch" 
+            """
     },
 
     "fast-lio-ros2": {
@@ -68,12 +70,15 @@ options = {
         "hostname": HOSTNAME,
         "username": USERNAME,
         "password": PASSWORD,
-        "command": r"""
+        "command": f"""
             docker start  Work && docker start dual-docker3
             docker exec Work bash -c "source install/setup.bash && ros2 launch isaac_ros_argus_camera isaac_ros_argus_camera_stereo.launch.py"   &
-            docker exec dual-docker bash -c "source noetic/ros1/devel/setup.bash && roslaunch livox_ros_driver2 msg_MID360.launch &
-            docker exec dual-docker3 bash -c "source noetic/ros1/devel/setup.bash && source noetic/install_isolated/setup.bash && rosparam load isaac_ros-dev/src/ros1_bridge/bridge.yaml && source isaac_ros-dev/install/setup.bash && ros2 run ros1_bridge parameter_bridge" &
-            docker exec dual-docker3 bash -c "source noetic/ros1/catkin_ws/devel/setup.bash && roslaunch fast_livo mapping_mid360.launch" 
+            sleep 5
+            docker exec dual-docker3 bash -c "source noetic/ros1/devel/setup.bash && roslaunch livox_ros_driver2 msg_MID360.launch" &
+            sleep 5
+            docker exec dual-docker3 bash -c "source noetic/ros1/devel/setup.bash && source noetic/install_isolated/setup.bash && rosparam load isaac_ros-dev/src/ros1_bridge/bridge.yaml && source isaac_ros-dev/install/setup.bash && ros2 run ros1_bridge parameter_bridge" & 
+            sleep 5
+            docker exec dual-docker3 bash -c "export ROS_IP={REMOTE_HOSTNAME} && export ROS_HOSTNAME={REMOTE_HOSTNAME} && export ROS_MASTER_URI=http://{REMOTE_HOSTNAME}:11311 && source noetic/ros1/catkin_ws/devel/setup.bash && roslaunch fast_livo mapping_mid360.launch" 
 """
     },
 

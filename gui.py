@@ -7,10 +7,9 @@ from tkinter import *
 import paramiko
 import threading
 from utils import containers, options
+from utils import RVIZ_TEMPLATE, LOCAL_HOSTNAME, REMOTE_HOSTNAME
 import subprocess
 
-LOCAL_HOSTNAME = "192.168.68.72"
-REMOTE_HOSTNAME = "192.168.68.86"
 
 def fetch_and_display_logs(ssh_info, text_widget, container_name):
     hostname = ssh_info["hostname"]
@@ -34,19 +33,6 @@ def fetch_and_display_logs(ssh_info, text_widget, container_name):
         text_widget.insert(tk.END, line)
         text_widget.yview(tk.END)
     ssh.close()
-
-
-# def start_logs_streaming(containers, text_widgets):
-#     for i in range(len(containers)):
-#         start_log_streaming(text_widgets[i], containers[i])
-#
-#
-# def start_log_streaming(text_widget, container_name):
-#     selected_option = dropbox.get()
-#     if selected_option in options:
-#         ssh_info = options[selected_option]
-#         threading.Thread(target=fetch_and_display_logs, args=(ssh_info, text_widget, container_name),
-#                          daemon=True).start()
 
 
 # establish ssh
@@ -142,73 +128,70 @@ def quit():
     root.destroy()
     threading.Thread(target=stop_running_containers, args={selected_option}).start()
     print("[INFO]: Quit ")
-  
+
 
 def open_rviz():
     selected_option = dropbox.get()
-    if selected_option == "fast_livo" or selected_option == "fast_lio_ros1":
-                
+    rviz_templete = RVIZ_TEMPLATE[selected_option]
+    if selected_option == "fast-livo" or selected_option == "fast-lio-ros1":
+
         # Command to run RViz in the Docker container
         command = f"""
-        docker start ros1-visualizer &&
+        docker start ros1-visualizer 
         docker exec ros1-visualizer bash -c "
         export ROS_IP={LOCAL_HOSTNAME}  
         export ROS_HOSTNAME={LOCAL_HOSTNAME} 
         export ROS_MASTER_URI=http://{REMOTE_HOSTNAME}:11311  
-        source ros_entrypoint.sh && rviz"
+        source ros_entrypoint.sh && rviz -d {rviz_templete}" 
         """
         subprocess.Popen(command, shell=True)
     else:
-        command = """
-            docker start ros2-visualizer
-            docker exec ros2-visualizer bash -c "source ros_entrypoint.sh && rviz2" &
+        command = f"""
+        docker start ros2-visualizer
+        docker exec ros2-visualizer bash -c "source ros_entrypoint.sh && rviz2 -d {rviz_templete}" 
         """
         subprocess.Popen(command, shell=True)
 
-        
 
-# main
-root = tk.Tk()
-root.title("Orin GUI")
-root.protocol("WM_DELETE_WINDOW", quit)
+if __name__ == " __main__":
+    root = tk.Tk()
+    root.title("Orin GUI")
+    root.protocol("WM_DELETE_WINDOW", quit)
 
-setting_frame = tk.Frame(root)
+    setting_frame = tk.Frame(root)
 
-label = ttk.Label(setting_frame, text="Select Application：")
-label.grid(row=0, column=0, pady=10, sticky="e")
+    label = ttk.Label(setting_frame, text="Select Application：")
+    label.grid(row=0, column=0, pady=10, sticky="e")
 
-# drop box
-dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20, bootstyle="info-reversed")
-dropbox.current(0)
-dropbox.grid(row=0, column=1, pady=10, sticky="we")
+    # drop box
+    dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20, bootstyle="info-reversed")
+    dropbox.current(0)
+    dropbox.grid(row=0, column=1, pady=10, sticky="we")
 
-# start button
-start_button = ttk.Button(setting_frame, text="Start", command=lambda: on_select(output_log_text), bootstyle=INFO)
-start_button.grid(row=0, column=2, padx=10, pady=10, sticky="we")
+    # start button
+    start_button = ttk.Button(setting_frame, text="Start", command=lambda: on_select(output_log_text), bootstyle=INFO)
+    start_button.grid(row=0, column=2, padx=10, pady=10, sticky="we")
 
-# Button to stop Docker containers
-stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER,
-                         command=lambda: stop_current_containers(options[dropbox.get()], containers[dropbox.get()], output_log_text))
-stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
+    # Button to stop Docker containers
+    stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER,
+                             command=lambda: stop_current_containers(options[dropbox.get()], containers[dropbox.get()],
+                                                                     output_log_text))
+    stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
 
-# Button to clear output
-clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
-clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
+    # Button to clear output
+    clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
+    clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
 
-# Button to open rviz
-open_button_rviz2  = ttk.Button(setting_frame, text="Open RViz2", command=open_rviz,bootstyle=SUCCESS)
-open_button_rviz2.grid(row=0, column=5, padx=10, pady=10, sticky="we")
+    # Button to open rviz
+    open_button_rviz2 = ttk.Button(setting_frame, text="Open RViz2", command=open_rviz, bootstyle=SUCCESS)
+    open_button_rviz2.grid(row=0, column=5, padx=10, pady=10, sticky="we")
 
+    setting_frame.pack()
+    log_frame = tk.Frame(root)
 
+    # output log
+    output_log_text = scrolledtext.ScrolledText(log_frame, width=150, height=50)
+    output_log_text.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    log_frame.pack()
 
-setting_frame.pack()
-log_frame = tk.Frame(root)
-
-
-
-# output log
-output_log_text = scrolledtext.ScrolledText(log_frame, width=150, height=50)
-output_log_text.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
-log_frame.pack()
-
-root.mainloop()
+    root.mainloop()

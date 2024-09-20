@@ -256,6 +256,14 @@ options = {
         "password": PASSWORD,
         "command": base_command(),
     },
+
+    "dnn": {
+        "hostname": HOSTNAME,
+        "username": USERNAME,
+        "password": PASSWORD,
+        "command": dnn_command(),
+    },
+
     "fast-lio-ros1": {
         "hostname": HOSTNAME,
         "username": USERNAME,
@@ -274,18 +282,14 @@ options = {
         "password": PASSWORD,
         "command": fast_livo_command(),
     },
-    "dnn": {
-        "hostname": HOSTNAME,
-        "username": USERNAME,
-        "password": PASSWORD,
-        "command": dnn_command(),
-    },
+
     "camera-detection": {
         "hostname": HOSTNAME,
         "username": USERNAME,
         "password": PASSWORD,
         "command": camera_detection_command(),
     },
+
     "perception-reconstruction": {
         "hostname": HOSTNAME,
         "username": USERNAME,
@@ -305,7 +309,7 @@ options = {
 
 RVIZ_TEMPLATE = {
     "base": "/rviz_config/base.rviz",
-    "dnn": "/rviz_config/depth.rviz",
+    "dnn": "/rviz_config/dnn.rviz",
     "fast-lio-ros1": "/rviz_config/fastlio_ros1.rviz",
     "fast-lio-ros2": "/rviz_config/fastlio.rviz",
     "fast-livo": "/rviz_config/loam_livox.rviz",

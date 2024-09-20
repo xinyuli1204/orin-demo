@@ -131,7 +131,6 @@ def open_rviz():
 
         # Command to run RViz in the Docker container
         command = f"""
-        docker start ros1-visualizer 
         docker exec ros1-visualizer bash -c "
         export ROS_IP={LOCAL_HOSTNAME}  
         export ROS_HOSTNAME={LOCAL_HOSTNAME} 
@@ -142,53 +141,60 @@ def open_rviz():
         subprocess.Popen(command, shell=True)
     else:
         command = f"""
-        docker start ros2-visualizer
         docker exec ros2-visualizer bash -c "source ros_entrypoint.sh && rviz2 -d {rviz_templete}" 
         echo "close rviz"
         """
         subprocess.Popen(command, shell=True)
 
+def start_visulizer():
+    subprocess.Popen("docker start ros2-visualizer && docker start ros1-visualizer", shell=True)
 
-root = tk.Tk()
-root.title("Orin GUI")
-root.protocol("WM_DELETE_WINDOW", quit)
+def stop_visulizer():
+    subprocess.Popen("docker stop ros2-visualizer && docker stop ros1-visualizer", shell=True)
 
-setting_frame = tk.Frame(root)
+if __name__ == "__main__":
+    start_visulizer()
+    root = tk.Tk()
+    root.title("Orin GUI")
+    root.protocol("WM_DELETE_WINDOW", quit)
 
-label = ttk.Label(setting_frame, text="Select Application：")
-label.grid(row=0, column=0, pady=10, sticky="e")
+    setting_frame = tk.Frame(root)
 
-# drop box
-dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20, bootstyle="info-reversed")
-dropbox.current(0)
-dropbox.grid(row=0, column=1, pady=10, sticky="we")
+    label = ttk.Label(setting_frame, text="Select Application：")
+    label.grid(row=0, column=0, pady=10, sticky="e")
+
+    # drop box
+    dropbox = ttk.Combobox(setting_frame, values=list(options.keys()), width=20, bootstyle="info-reversed")
+    dropbox.current(0)
+    dropbox.grid(row=0, column=1, pady=10, sticky="we")
 
 
-# start button
-control_button = ttk.Button(setting_frame, text="Start", command=lambda: on_select(output_log_text), bootstyle=INFO)
-control_button.grid(row=0, column=2, padx=10, pady=10, sticky="we")
+    # start button
+    control_button = ttk.Button(setting_frame, text="Start", command=lambda: on_select(output_log_text), bootstyle=INFO)
+    control_button.grid(row=0, column=2, padx=10, pady=10, sticky="we")
 
-# # Button to stop Docker containers
-# stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER,
-#                             command=lambda: stop_current_containers(options[dropbox.get()], containers[dropbox.get()],
-#                                                                     output_log_text))
-# stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
+    # # Button to stop Docker containers
+    # stop_button = ttk.Button(setting_frame, text="Stop", bootstyle=DANGER,
+    #                             command=lambda: stop_current_containers(options[dropbox.get()], containers[dropbox.get()],
+    #                                                                     output_log_text))
+    # stop_button.grid(row=0, column=3, padx=10, pady=10, sticky="we")
 
-# Button to clear output
-clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
-clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
+    # Button to clear output
+    clear_button = ttk.Button(setting_frame, text="Clear Log", command=lambda: clear_text_widgets([output_log_text]))
+    clear_button.grid(row=0, column=4, padx=10, pady=10, sticky="we")
 
-# Button to open rviz
-open_button_rviz2 = ttk.Button(setting_frame, text="Open RViz", command=open_rviz, bootstyle=SUCCESS)
-open_button_rviz2.grid(row=0, column=5, padx=10, pady=10, sticky="we")
+    # Button to open rviz
+    open_button_rviz2 = ttk.Button(setting_frame, text="Open RViz", command=open_rviz, bootstyle=SUCCESS)
+    open_button_rviz2.grid(row=0, column=5, padx=10, pady=10, sticky="we")
 
-setting_frame.pack()
-log_frame = tk.Frame(root)
+    setting_frame.pack()
+    log_frame = tk.Frame(root)
 
-# output log
-output_log_text = scrolledtext.ScrolledText(log_frame, width=150, height=50)
-output_log_text.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
-log_frame.pack()
+    # output log
+    output_log_text = scrolledtext.ScrolledText(log_frame, width=150, height=50)
+    output_log_text.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    log_frame.pack()
 
-root.mainloop()
+    root.mainloop()
 
+    start_visulizer()

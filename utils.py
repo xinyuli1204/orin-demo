@@ -99,11 +99,7 @@ def camera_detection_command():
 def perception_reconstruction_command():
     return """
         docker start Work
-        docker exec Work bash -c "source install/setup.bash && \
-            ros2 launch isaac_ros_examples isaac_ros_examples.launch.py \
-            launch_fragments:=argus_stereo,rectify_stereo,ess_disparity \
-            engine_file_path=${ISAAC_ROS_WS}/isaac_ros_assets/models/dnn_stereo_disparity/dnn_stereo_disparity_v4.0.0/ess.engine \
-            threshold:=0.35"
+        docker exec Work bash -c "source install/setup.bash && ./src/detection.sh"
     """
 
 
